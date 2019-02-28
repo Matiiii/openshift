@@ -9,7 +9,7 @@ node('maven') {
   }
   
   stage('Test') {
-    steps {
+    step {
       sh 'mvn test -Dmaven.test.failure.ignore=true'
           }
     post {
