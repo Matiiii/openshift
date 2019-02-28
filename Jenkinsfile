@@ -1,4 +1,4 @@
-Node('maven') {
+node('maven') {
   stage('Clean') {
     git url: "https://github.com/siamaksade/cart-service.git"
     sh "mvn clean"
