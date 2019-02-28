@@ -14,7 +14,6 @@ node('maven') {
   
   stage('Package') {
     sh "mvn package"
-    stash name:"jar", includes:"target/hello.jar"
   }
   
   stage('Test') {
