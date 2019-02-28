@@ -4,26 +4,17 @@ node('maven') {
     sh "mvn clean"
   }
   
-  stage('Compile') {
-    sh "mvn compile"
-     }
-  
-  stage('Install') {
-    sh "mvn install"
-  }
-  
-  stage('Package') {
-    sh "mvn package"
+  stage('Build') {
+    sh "mvn -DskipTests package"
   }
   
   stage('Test') {
-    parallel(
-      "Cart Tests": {
-        sh "mvn verify -P cart-tests"
-      },
-      "Discount Tests": {
-        sh "mvn verify -P discount-tests"
-      }
-    )
+    steps {
+      sh 'mvn test -Dmaven.test.failure.ignore=true'
+          }
+    post {
+      success {
+        junit 'target/surefire-reports/*.xml'
+         }
   }
 }
