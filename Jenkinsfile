@@ -1,26 +1,42 @@
-pipeline {
-    agent any
-    stages {
-        stage('Build') {
-            steps {
-                sh 'mvn -B -DskipTests clean package'
-		stash name:"jar", includes:"target/cart.jar"
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'mvn test -Dmaven.test.failure.ignore=true'
-            }
-            post {
-                success {
-                    junit 'target/surefire-reports/*.xml'
-                }
-            }
-        }
-        stage('Deliver') {
-            steps {
-                sh './jenkins/scripts/deliver.sh'
-            }
-        }
-    }
+node('maven') {
+  stage('Clean') {
+    git url: "https://github.com/siamaksade/cart-service.git"
+    sh "mvn clean"
+  }
+  
+  stage('Compile') {
+    sh "mvn compile"
+     }
+  
+  stage('Install') {
+    sh "mvn install"
+  }
+  
+  stage('Package') {
+    sh "mvn package"
+    stash name:"jar", includes:"target/cart.jar"
+  }
+  
+  stage('Test') {
+    parallel(
+      "Cart Tests": {
+        sh "mvn verify -P cart-tests"
+      },
+      "Discount Tests": {
+        sh "mvn verify -P discount-tests"
+      }
+    )
+  }
+  stage('Build Image') {
+  unstash name:"jar"
+    sh "oc start-build cart --from-file=target/cart.jar --follow"
+  }
+  stage('Deploy') {
+    openshiftDeploy depCfg: 'cart'
+    openshiftVerifyDeployment depCfg: 'cart', replicaCount: 1, verifyReplicaCount: true
+  }
+  stage('System Test') {
+  //  sh "curl -s -X POST http://cart:8080/api/cart/dummy/666/1"
+  //  sh "curl -s http://cart:8080/api/cart/dummy | grep 'Dummy Product'"
+  //}
 }
