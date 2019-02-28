@@ -9,13 +9,7 @@ node('maven') {
   }
   
   stage('Test') {
-    step {
-      sh 'mvn test -Dmaven.test.failure.ignore=true'
-          }
-    post {
-      success {
-        junit 'target/surefire-reports/*.xml'
-         }
+    sh "mvn test -Dmaven.test.failure.ignore=true"
   }
 }
 }
